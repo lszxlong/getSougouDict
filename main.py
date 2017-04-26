@@ -4,8 +4,10 @@ import user_agent
 import urllib.request as request
 import urllib.parse as urlparse
 import os
+import rpy2.robjects as robjects
+from rpy2.robjects.packages import importr
 base_url = 'http://pinyin.sogou.com/'
-
+importr("cidian")
 
 def get_url_content(url):
     back = requests.get(url, headers=user_agent.generate_navigator(os='win'))
@@ -34,7 +36,7 @@ def get_all_cate():
 def get_file_name(url):
     back = urlparse.parse_qs(url)
     print(back['name'][0])
-    return str(back['name'][0]) + ".scel"
+    return str(back['name'][0])
 
 
 def parse_content_list(d):
@@ -52,12 +54,21 @@ def valid_path(path):
         os.makedirs(path)
 
 
+def parser_dict(path, file_name):
+    scel_path = path + file_name + ".scel"
+    path = path + "/txt/"
+    valid_path(path)
+    output = path + file_name + ".txt"
+    ss = robjects.r('decode_scel(scel = "{scel}", output = "{output}", cpp =  TRUE)'.format(scel=scel_path,output=output))
+
+
 def do_download_dict(down_list, path):
     for url in down_list:
         try:
             file_name = get_file_name(url)
-            file_path = path + file_name
+            file_path = path + file_name + ".scel"
             request.urlretrieve(url, file_path)
+            parser_dict(path,file_name)
         except Exception:
             print(Exception)
             print(url)
